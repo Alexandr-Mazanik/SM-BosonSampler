@@ -4,6 +4,7 @@ from numpy.linalg import multi_dot
 
 class BeamSplitter:
     def __init__(self, theta, phi, alpha, modes, num_of_modes):
+        #TODO add phase shifting
         self.modes = modes
         self._number_of_modes = num_of_modes
 
@@ -15,6 +16,7 @@ class BeamSplitter:
     def calc_unitary(self):
         unitary = np.identity(self._number_of_modes, dtype=complex)
 
+        #TODO make it beauty
         unitary[self.modes[0]-1, self.modes[0]-1] = self._t
         unitary[self.modes[0]-1, self.modes[1]-1] = -np.conj(self._r)
         unitary[self.modes[1]-1, self.modes[0]-1] = self._r
@@ -33,15 +35,20 @@ class BosonSampler:
         self._beam_splitters.append(BeamSplitter(theta, phi, alpha, modes, self.number_of_modes))
 
     def calc_unitary(self):
+        #TODO remove the excess identity matrix
         self._beam_splitters = np.flip(self._beam_splitters)
         self.unitary = multi_dot([np.identity(self.number_of_modes)] +
                                  [bs.unitary for bs in self._beam_splitters])
 
     def get_some_info(self):
+        #TODO change reading method
         print(self.unitary)
 
 
 def main():
+    #TODO make a test for unitary
+    #TODO compare with SF
+    #TODO faster
     sampler = BosonSampler(7)
 
     for i in range(6):
