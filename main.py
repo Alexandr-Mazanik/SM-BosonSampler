@@ -41,21 +41,30 @@ class BosonSampler:
 
     def get_some_info(self):
         #TODO change reading method
-        print(self.unitary)
+        print(np.round(self.unitary, 3))
+
+
+def is_unitary(matrix, dim):
+    matrix_dagger = np.conj(matrix.transpose())
+    # print(np.round(np.dot(matrix, matrix_dagger)))
+    if (np.round(np.dot(matrix, matrix_dagger)) == np.identity(dim)).all():
+        print("\nTrue")
+    else:
+        print("\nFalse")
 
 
 def main():
-    #TODO make a test for unitary
     #TODO compare with SF
     #TODO faster
     sampler = BosonSampler(3)
 
-    sampler.add_beam_splitter(np.pi / 4, 0, 0, (1, 2))
-    sampler.add_beam_splitter(np.pi / 4, 0, 0, (2, 3))
+    sampler.add_beam_splitter(np.pi / 2, np.pi/2, 0, (1, 2))
+    sampler.add_beam_splitter(np.pi / 46, np.pi/17, 0, (1, 3))
 
     sampler.calc_system_unitary()
 
     sampler.get_some_info()
+    is_unitary(sampler.unitary, sampler.number_of_modes)
 
 
 if __name__ == '__main__':
