@@ -3,26 +3,24 @@ from numpy.linalg import multi_dot
 
 
 class BeamSplitter:
-    def __init__(self, theta, phi, alpha, modes, num_of_modes):
+    def __init__(self, theta, phi, alpha):
         #TODO add phase shifting
-        self.modes = modes
-        self._number_of_modes = num_of_modes
-
         self._t = np.cos(theta)
         self._r = np.exp(phi * 1j) * np.sin(theta)
 
-        self.unitary = self.calc_unitary()
+        self._mode1 = self._mode2 = None
+        self.unitary = None
 
-    def calc_unitary(self):
-        unitary = np.identity(self._number_of_modes, dtype=complex)
+    def calc_unitary(self, number_of_modes, modes):
+        self._mode1 = modes[0] - 1
+        self._mode2 = modes[1] - 1
+        self.unitary = np.identity(number_of_modes, dtype=complex)
 
         #TODO make it beauty
-        unitary[self.modes[0]-1, self.modes[0]-1] = self._t
-        unitary[self.modes[0]-1, self.modes[1]-1] = -np.conj(self._r)
-        unitary[self.modes[1]-1, self.modes[0]-1] = self._r
-        unitary[self.modes[1]-1, self.modes[1]-1] = self._t
-
-        return unitary
+        self.unitary[self._mode1, self._mode1] = self._t
+        self.unitary[self._mode1, self._mode2] = -np.conj(self._r)
+        self.unitary[self._mode2, self._mode1] = self._r
+        self.unitary[self._mode2, self._mode2] = self._t
 
 
 class BosonSampler:
@@ -32,13 +30,14 @@ class BosonSampler:
         self.unitary = np.identity(self.number_of_modes)
 
     def add_beam_splitter(self, theta, phi, alpha, modes):
-        self._beam_splitters.append(BeamSplitter(theta, phi, alpha, modes, self.number_of_modes))
+        bs = BeamSplitter(theta, phi, alpha)
+        bs.calc_unitary(self.number_of_modes, modes)
+        self._beam_splitters.append(bs)
 
-    def calc_unitary(self):
+    def calc_system_unitary(self):
         #TODO remove the excess identity matrix
-        self._beam_splitters = np.flip(self._beam_splitters)
         self.unitary = multi_dot([np.identity(self.number_of_modes)] +
-                                 [bs.unitary for bs in self._beam_splitters])
+                                 [bs.unitary for bs in np.flip(self._beam_splitters)])
 
     def get_some_info(self):
         #TODO change reading method
@@ -49,12 +48,12 @@ def main():
     #TODO make a test for unitary
     #TODO compare with SF
     #TODO faster
-    sampler = BosonSampler(7)
+    sampler = BosonSampler(3)
 
-    for i in range(6):
-        sampler.add_beam_splitter(np.pi / 4, 0, 0, (i, i+1))
+    sampler.add_beam_splitter(np.pi / 4, 0, 0, (1, 2))
+    sampler.add_beam_splitter(np.pi / 4, 0, 0, (2, 3))
 
-    sampler.calc_unitary()
+    sampler.calc_system_unitary()
 
     sampler.get_some_info()
 
