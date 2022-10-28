@@ -31,16 +31,16 @@ def test():
     # and our unitary
     sampler_unitary_test = main.BosonSampler(num_of_modes)
 
-    sampler_unitary_test.add_beam_splitter(np.pi / 4, 0, 0, (1, 2))
-    sampler_unitary_test.add_beam_splitter(np.pi / 4, 0, 0, (2, 3))
-    sampler_unitary_test.add_beam_splitter(np.pi / 4, 0, 0, (1, 3))
-    sampler_unitary_test.add_beam_splitter(np.pi / 4, 0, 0, (3, 4))
-    sampler_unitary_test.add_beam_splitter(np.pi / 4, 0, 0, (2, 4))
-    sampler_unitary_test.add_beam_splitter(np.pi / 4, 0, 0, (4, 5))
-    sampler_unitary_test.add_beam_splitter(np.pi / 4, 0, 0, (3, 5))
-    sampler_unitary_test.add_beam_splitter(np.pi / 4, 0, 0, (5, 6))
-    sampler_unitary_test.add_beam_splitter(np.pi / 4, 0, 0, (4, 6))
-    sampler_unitary_test.add_beam_splitter(np.pi / 4, 0, 0, (1, 6))
+    sampler_unitary_test.add_BSgate((1, 2))
+    sampler_unitary_test.add_BSgate((2, 3))
+    sampler_unitary_test.add_BSgate((1, 3))
+    sampler_unitary_test.add_BSgate((3, 4))
+    sampler_unitary_test.add_BSgate((2, 4))
+    sampler_unitary_test.add_BSgate((4, 5))
+    sampler_unitary_test.add_BSgate((3, 5))
+    sampler_unitary_test.add_BSgate((5, 6))
+    sampler_unitary_test.add_BSgate((4, 6))
+    sampler_unitary_test.add_BSgate((1, 6))
 
     sampler_unitary_test.calc_system_unitary()
     sampler_u = sampler_unitary_test.unitary

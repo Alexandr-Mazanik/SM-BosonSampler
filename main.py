@@ -29,7 +29,7 @@ class BosonSampler:
         self._beam_splitters = []
         self.unitary = np.identity(self.number_of_modes)
 
-    def add_beam_splitter(self, theta, phi, alpha, modes):
+    def add_BSgate(self, modes, theta=np.pi/4, phi=0, alpha=0):
         bs = BeamSplitter(theta, phi, alpha)
         bs.calc_unitary(self.number_of_modes, modes)
         self._beam_splitters.append(bs)
@@ -39,9 +39,8 @@ class BosonSampler:
         self.unitary = multi_dot([np.identity(self.number_of_modes)] +
                                  [bs.unitary for bs in np.flip(self._beam_splitters)])
 
-    def get_some_info(self):
-        #TODO change reading method
-        print(np.round(self.unitary, 3))
+    def print_system_unitary(self):
+        print("U:\n", np.round(self.unitary, 3))
 
 
 def is_unitary(matrix, dim):
@@ -54,16 +53,23 @@ def is_unitary(matrix, dim):
 
 
 def main():
-    #TODO compare with SF
     #TODO faster
-    sampler = BosonSampler(3)
+    sampler = BosonSampler(6)
 
-    sampler.add_beam_splitter(np.pi / 2, np.pi/2, 0, (1, 2))
-    sampler.add_beam_splitter(np.pi / 46, np.pi/17, 0, (1, 3))
+    sampler.add_BSgate((1, 2))
+    sampler.add_BSgate((2, 3))
+    sampler.add_BSgate((1, 3))
+    sampler.add_BSgate((3, 4))
+    sampler.add_BSgate((2, 4))
+    sampler.add_BSgate((4, 5))
+    sampler.add_BSgate((3, 5))
+    sampler.add_BSgate((5, 6))
+    sampler.add_BSgate((4, 6))
+    sampler.add_BSgate((1, 6))
 
     sampler.calc_system_unitary()
 
-    sampler.get_some_info()
+    sampler.print_system_unitary()
     is_unitary(sampler.unitary, sampler.number_of_modes)
 
 
