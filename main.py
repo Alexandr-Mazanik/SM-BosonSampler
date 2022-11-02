@@ -45,38 +45,41 @@ class BosonSampler:
                 mode1, mode2 = list(map(int, f_beam_splitter.split()[0:2]))
                 theta, phi_rho, phi_tau = list(map(float, f_beam_splitter.split()[2:]))
                 self.add_BS_gate((mode1, mode2), theta, phi_rho, phi_tau)
+        print("--> Scheme was successfully uploaded")
+
+    def export_system_unitary(self):
+        with open('scheme/scheme_unitary.txt', 'w') as f_out:
+            for line in np.round(self.unitary, 6):
+                for element in line:
+                    f_out.write(str(element.real) + '\t' + str(element.imag) + '\t')
+                f_out.write('\n')
+        print("--> Unitary was successfully exported")
 
     def print_system_unitary(self):
-        print("U:\n", np.round(self.unitary, 3))
+        print("--> U:\n", np.round(self.unitary, 3))
 
 
 def is_unitary(matrix, dim):
     matrix_dagger = np.conj(matrix.transpose())
     # print(np.round(np.dot(matrix, matrix_dagger)))
     if (np.round(np.dot(matrix, matrix_dagger), 10) == np.identity(dim)).all():
-        print("\nis_unitary: True")
+        print("--> is_unitary: True")
     else:
-        print("\nis_unitary: False")
+        print("--> is_unitary: False")
 
 
 def main():
     time_start = time.time()
 
     sampler = BosonSampler(1)
-
     sampler.upload_scheme_from_file()
-
-    #sampler.add_BS_gate((1, 2), theta=0.233, phi_rho=23.231, phi_tau=0.232)
-    #sampler.add_BS_gate((2, 3), theta=1.234, phi_rho=1.231, phi_tau=0.873)
-
     sampler.calc_system_unitary()
+    sampler.export_system_unitary()
 
-    sampler.print_system_unitary()
     is_unitary(sampler.unitary, sampler.number_of_modes)
 
     time_end = time.time()
-    print("\nThe time of execution is :",
-          (time_end - time_start) * 10 ** 3, "ms")
+    print("\n--> The time of execution is :", (time_end - time_start) * 10 ** 3, "ms")
 
 
 if __name__ == '__main__':
