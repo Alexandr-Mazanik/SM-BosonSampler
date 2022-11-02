@@ -5,42 +5,26 @@ import numpy as np
 
 
 def test():
-    num_of_modes = 6
+    num_of_modes = 3
 
     # calculate unitary using strawberry fields
     test_unitary = sf.Program(num_of_modes)
     with test_unitary.context as q:
-        BSgate() | (q[0], q[1])
-        BSgate() | (q[1], q[2])
-        BSgate() | (q[0], q[2])
-        BSgate() | (q[2], q[3])
-        BSgate() | (q[1], q[3])
-        BSgate() | (q[3], q[4])
-        BSgate() | (q[2], q[4])
-        BSgate() | (q[4], q[5])
-        BSgate() | (q[3], q[5])
-        BSgate() | (q[0], q[5])
+        BSgate(theta=1.12333, phi=2.31234) | (q[0], q[1])
+        BSgate(theta=np.pi/10, phi=0.12334) | (q[0], q[2])
 
     test_unitary_compiled = test_unitary.compile(compiler="gaussian_unitary")
 
     s = test_unitary_compiled.circuit[0].op.p[0]
     # print(s)
-    u = s[:6, :6] + 1j * s[6:, :6]
+    u = s[:num_of_modes, :num_of_modes] + 1j * s[num_of_modes:, :num_of_modes]
     print("\nstrawberry fields U:\n", np.round(u, 3))
 
     # and our unitary
     sampler_unitary_test = main.BosonSampler(num_of_modes)
 
-    sampler_unitary_test.add_BSgate((1, 2))
-    sampler_unitary_test.add_BSgate((2, 3))
-    sampler_unitary_test.add_BSgate((1, 3))
-    sampler_unitary_test.add_BSgate((3, 4))
-    sampler_unitary_test.add_BSgate((2, 4))
-    sampler_unitary_test.add_BSgate((4, 5))
-    sampler_unitary_test.add_BSgate((3, 5))
-    sampler_unitary_test.add_BSgate((5, 6))
-    sampler_unitary_test.add_BSgate((4, 6))
-    sampler_unitary_test.add_BSgate((1, 6))
+    sampler_unitary_test.add_BS_gate((1, 2), theta=1.12333, phi_rho=2.31234)
+    sampler_unitary_test.add_BS_gate((1, 3), theta=np.pi/10, phi_rho=0.12334)
 
     sampler_unitary_test.calc_system_unitary()
     sampler_u = sampler_unitary_test.unitary
