@@ -6,7 +6,6 @@ import time
 
 
 def to_sf_BSgate(q, modes, theta=np.pi/4, phi_rho=0., phi_tau=0.):
-    print(q[modes[1] - 1])
     Rgate(phi_tau)  | q[modes[0] - 1]
     Rgate(-phi_tau) | q[modes[1] - 1]
     BSgate(theta, phi_rho - phi_tau) | (q[modes[0] - 1], q[modes[1] - 1])

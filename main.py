@@ -16,7 +16,6 @@ class BeamSplitter:
         self._mode2 = modes[1] - 1
         self.unitary = np.identity(number_of_modes, dtype=complex)
 
-        # TODO make it beauty
         self.unitary[self._mode1, self._mode1] = self._t
         self.unitary[self._mode1, self._mode2] = -np.conj(self._r)
         self.unitary[self._mode2, self._mode1] = self._r
@@ -46,14 +45,13 @@ class BosonSampler:
 def is_unitary(matrix, dim):
     matrix_dagger = np.conj(matrix.transpose())
     # print(np.round(np.dot(matrix, matrix_dagger)))
-    if (np.round(np.dot(matrix, matrix_dagger)) == np.identity(dim)).all():
+    if (np.round(np.dot(matrix, matrix_dagger), 10) == np.identity(dim)).all():
         print("\nTrue")
     else:
         print("\nFalse")
 
 
 def main():
-    # TODO faster
     time_start = time.time()
 
     sampler = BosonSampler(2)
