@@ -38,6 +38,14 @@ class BosonSampler:
         self.unitary = multi_dot([np.identity(self.number_of_modes)] +
                                  [bs.unitary for bs in np.flip(self._beam_splitters)])
 
+    def upload_scheme_from_file(self):
+        with open('scheme/curr_scheme.txt', 'r') as f_scheme:
+            self.number_of_modes = int(f_scheme.readline())
+            for f_beam_splitter in f_scheme:
+                mode1, mode2 = list(map(int, f_beam_splitter.split()[0:2]))
+                theta, phi_rho, phi_tau = list(map(float, f_beam_splitter.split()[2:]))
+                self.add_BS_gate((mode1, mode2), theta, phi_rho, phi_tau)
+
     def print_system_unitary(self):
         print("U:\n", np.round(self.unitary, 3))
 
@@ -46,17 +54,19 @@ def is_unitary(matrix, dim):
     matrix_dagger = np.conj(matrix.transpose())
     # print(np.round(np.dot(matrix, matrix_dagger)))
     if (np.round(np.dot(matrix, matrix_dagger), 10) == np.identity(dim)).all():
-        print("\nTrue")
+        print("\nis_unitary: True")
     else:
-        print("\nFalse")
+        print("\nis_unitary: False")
 
 
 def main():
     time_start = time.time()
 
-    sampler = BosonSampler(2)
+    sampler = BosonSampler(1)
 
-    sampler.add_BS_gate((1, 2), theta=0.233, phi_rho=23.231, phi_tau=0.232)
+    sampler.upload_scheme_from_file()
+
+    #sampler.add_BS_gate((1, 2), theta=0.233, phi_rho=23.231, phi_tau=0.232)
     #sampler.add_BS_gate((2, 3), theta=1.234, phi_rho=1.231, phi_tau=0.873)
 
     sampler.calc_system_unitary()
