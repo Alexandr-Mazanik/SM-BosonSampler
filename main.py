@@ -5,7 +5,6 @@ from numpy.linalg import multi_dot
 
 class BeamSplitter:
     def __init__(self, theta, phi_rho, phi_tau):
-        # TODO add phase shifting
         self._t = np.exp(phi_tau * 1j) * np.cos(theta)
         self._r = np.exp(phi_rho * 1j) * np.sin(theta)
 
@@ -21,7 +20,7 @@ class BeamSplitter:
         self.unitary[self._mode1, self._mode1] = self._t
         self.unitary[self._mode1, self._mode2] = -np.conj(self._r)
         self.unitary[self._mode2, self._mode1] = self._r
-        self.unitary[self._mode2, self._mode2] = self._t
+        self.unitary[self._mode2, self._mode2] = np.conj(self._t)
 
 
 class BosonSampler:
@@ -57,10 +56,10 @@ def main():
     # TODO faster
     time_start = time.time()
 
-    sampler = BosonSampler(3)
+    sampler = BosonSampler(2)
 
     sampler.add_BS_gate((1, 2), theta=0.233, phi_rho=23.231, phi_tau=0.232)
-    sampler.add_BS_gate((2, 3), theta=1.234, phi_rho=1.231, phi_tau=0.873)
+    #sampler.add_BS_gate((2, 3), theta=1.234, phi_rho=1.231, phi_tau=0.873)
 
     sampler.calc_system_unitary()
 
