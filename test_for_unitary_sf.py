@@ -5,6 +5,13 @@ import numpy as np
 import time
 
 
+def to_sf_BSgate(q, modes, theta=np.pi/4, phi_rho=0., phi_tau=0.):
+    print(q[modes[1] - 1])
+    Rgate(phi_tau)  | q[modes[0] - 1]
+    Rgate(-phi_tau) | q[modes[1] - 1]
+    BSgate(theta, phi_rho - phi_tau) | (q[modes[0] - 1], q[modes[1] - 1])
+
+
 def test():
     num_of_modes = 3
 
@@ -12,12 +19,8 @@ def test():
     time_sf_start = time.time()
     test_unitary = sf.Program(num_of_modes)
     with test_unitary.context as q:
-        Rgate(0.232)  | q[0]
-        Rgate(-0.232) | q[1]
-        BSgate(theta=0.233, phi=22.999) | (q[0], q[1])
-        Rgate(0.873)  | q[1]
-        Rgate(-0.873) | q[2]
-        BSgate(theta=1.234, phi=0.358) | (q[1], q[2])
+        to_sf_BSgate(q, (1, 2), theta=0.233, phi_rho=23.231, phi_tau=0.232)
+        to_sf_BSgate(q, (2, 3), theta=1.234, phi_rho=1.231, phi_tau=0.873)
 
     test_unitary_compiled = test_unitary.compile(compiler="gaussian_unitary")
 
