@@ -35,15 +35,18 @@ class BosonSampler:
 
     def calc_system_unitary(self):
         # TODO remove the excess identity matrix
+        time_unit_start = time.time()
         self.unitary = multi_dot([np.identity(self.number_of_modes)] +
                                  [bs.unitary for bs in np.flip(self._beam_splitters)])
+        time_unit_end = time.time()
+        print("--> The time for dot product is :", (time_unit_end - time_unit_start) * 10 ** 3, "ms")
 
     def upload_scheme_from_file(self):
         with open('scheme/curr_scheme.txt', 'r') as f_scheme:
             self.number_of_modes = int(f_scheme.readline())
             for f_beam_splitter in f_scheme:
-                mode1, mode2 = list(map(int, f_beam_splitter.split()[0:2]))
-                theta, phi_rho, phi_tau = list(map(float, f_beam_splitter.split()[2:]))
+                mode1, mode2 = list(map(int, f_beam_splitter.split('\t')[0:2]))
+                theta, phi_rho, phi_tau = list(map(float, f_beam_splitter.split('\t')[2:]))
                 self.add_BS_gate((mode1, mode2), theta, phi_rho, phi_tau)
         print("--> Scheme was successfully uploaded")
 

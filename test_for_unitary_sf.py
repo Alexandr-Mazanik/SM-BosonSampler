@@ -20,8 +20,6 @@ def upload_sf_system(q, f_scheme):
 
 def test():
     # calculate unitary using strawberry fields
-    time_sf_start = time.time()
-
     f_scheme = open('scheme/curr_scheme.txt', 'r')
     num_of_modes = int(f_scheme.readline())
 
@@ -30,22 +28,23 @@ def test():
         upload_sf_system(q, f_scheme)
         f_scheme.close()
 
+    time_sf_start = time.time()
     test_unitary_compiled = test_unitary.compile(compiler="gaussian_unitary")
+    time_sf_end = time.time()
 
     s = test_unitary_compiled.circuit[0].op.p[0]
     sf_unitary = s[:num_of_modes, :num_of_modes] + 1j * s[num_of_modes:, :num_of_modes]
-
-    time_sf_end = time.time()
+    print("--> SF - done")
 
     # calculate unitary using boson sampler
-    time_bs_start = time.time()
-
     sampler_unitary = main.BosonSampler(num_of_modes)
     sampler_unitary.upload_scheme_from_file()
+
+    time_bs_start = time.time()
     sampler_unitary.calc_system_unitary()
     sampler_unitary = sampler_unitary.unitary
-
     time_bs_end = time.time()
+    print("--> boson_sample - done")
 
     # compare them
     print("\nThe time of execution of SF is :", (time_sf_end - time_sf_start) * 10 ** 3, "ms")
