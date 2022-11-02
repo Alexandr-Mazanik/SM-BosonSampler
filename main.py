@@ -1,4 +1,5 @@
 import numpy as np
+import time
 from numpy.linalg import multi_dot
 
 
@@ -29,7 +30,7 @@ class BosonSampler:
         self._beam_splitters = []
         self.unitary = np.identity(self.number_of_modes)
 
-    def add_BS_gate(self, modes, theta=np.pi/4, phi_rho=0, phi_tau=0):
+    def add_BS_gate(self, modes, theta=np.pi/4, phi_rho=0., phi_tau=0.):
         bs = BeamSplitter(theta, phi_rho, phi_tau)
         bs.calc_unitary(self.number_of_modes, modes)
         self._beam_splitters.append(bs)
@@ -54,15 +55,21 @@ def is_unitary(matrix, dim):
 
 def main():
     # TODO faster
+    time_start = time.time()
+
     sampler = BosonSampler(3)
 
-    sampler.add_BS_gate((1, 2))
-    sampler.add_BS_gate((2, 3))
+    sampler.add_BS_gate((1, 2), theta=0.233, phi_rho=23.231, phi_tau=0.232)
+    sampler.add_BS_gate((2, 3), theta=1.234, phi_rho=1.231, phi_tau=0.873)
 
     sampler.calc_system_unitary()
 
     sampler.print_system_unitary()
     is_unitary(sampler.unitary, sampler.number_of_modes)
+
+    time_end = time.time()
+    print("\nThe time of execution is :",
+          (time_end - time_start) * 10 ** 3, "ms")
 
 
 if __name__ == '__main__':
