@@ -47,13 +47,13 @@ def test():
     print("--> boson_sample - done")
 
     # compare them
-    print("\nThe time of execution of SF is :", (time_sf_end - time_sf_start) * 10 ** 3, "ms")
-    print("\nThe time of execution of Boson_Sampler is :", (time_bs_end - time_bs_start) * 10 ** 3, "ms")
+    print("\n--> The time of execution of SF is :", (time_sf_end - time_sf_start) * 10 ** 3, "ms")
+    print("--> The time of execution of Boson_Sampler is :", (time_bs_end - time_bs_start) * 10 ** 3, "ms")
 
     if np.array_equal(np.round(sampler_unitary, 5), np.round(sf_unitary, 5)):
-        print("\nTrue\n")
+        print("\n--> test result: True\n")
     else:
-        print("\nFalse\n")
+        print("\n--> test result: False\n")
 
 
 if __name__ == '__main__':

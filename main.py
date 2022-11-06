@@ -1,6 +1,6 @@
 import numpy as np
 import time
-from numpy.linalg import multi_dot
+from scipy import sparse
 
 
 class BeamSplitter:
@@ -12,21 +12,21 @@ class BeamSplitter:
         self.unitary = None
 
     def calc_unitary(self, number_of_modes, modes):
-        self._mode1 = modes[0] - 1
-        self._mode2 = modes[1] - 1
-        self.unitary = np.identity(number_of_modes, dtype=complex)
+        list_modes = np.array([modes[0] - 1, modes[1] - 1])
+        list_data = np.array([self._t - 1, np.conj(self._t) - 1, -np.conj(self._r), self._r])
 
-        self.unitary[self._mode1, self._mode1] = self._t
-        self.unitary[self._mode1, self._mode2] = -np.conj(self._r)
-        self.unitary[self._mode2, self._mode1] = self._r
-        self.unitary[self._mode2, self._mode2] = np.conj(self._t)
+        row_ind = np.concatenate([np.array(range(number_of_modes)), list_modes, list_modes])
+        col_ing = np.concatenate([np.array(range(number_of_modes)), list_modes, np.flip(list_modes)])
+        data = np.concatenate([np.ones((number_of_modes, ), dtype=complex), list_data])
+
+        self.unitary = sparse.csr_matrix((data, (row_ind, col_ing)), shape=(number_of_modes, number_of_modes))
 
 
 class BosonSampler:
     def __init__(self, modes_num):
         self.number_of_modes = modes_num
         self._beam_splitters = []
-        self.unitary = np.identity(self.number_of_modes)
+        self.unitary = sparse.csr_matrix(np.identity(self.number_of_modes))
 
     def add_BS_gate(self, modes, theta=np.pi/4, phi_rho=0., phi_tau=0.):
         bs = BeamSplitter(theta, phi_rho, phi_tau)
@@ -34,10 +34,11 @@ class BosonSampler:
         self._beam_splitters.append(bs)
 
     def calc_system_unitary(self):
-        # TODO remove the excess identity matrix
         time_unit_start = time.time()
-        self.unitary = multi_dot([np.identity(self.number_of_modes)] +
-                                 [bs.unitary for bs in np.flip(self._beam_splitters)])
+        self.unitary = sparse.csr_matrix(np.identity(self.number_of_modes))
+        for bs in np.flip(self._beam_splitters):
+            self.unitary = sparse.csr_matrix.dot(self.unitary, bs.unitary)
+        self.unitary = self.unitary.toarray()
         time_unit_end = time.time()
         print("--> The time for dot product is :", (time_unit_end - time_unit_start) * 10 ** 3, "ms")
 
@@ -64,7 +65,6 @@ class BosonSampler:
 
 def is_unitary(matrix, dim):
     matrix_dagger = np.conj(matrix.transpose())
-    # print(np.round(np.dot(matrix, matrix_dagger)))
     if (np.round(np.dot(matrix, matrix_dagger), 10) == np.identity(dim)).all():
         print("--> is_unitary: True")
     else:
@@ -82,6 +82,7 @@ def main():
     is_unitary(sampler.unitary, sampler.number_of_modes)
 
     time_end = time.time()
+
     print("\n--> The time of execution is :", (time_end - time_start) * 10 ** 3, "ms")
 
 
