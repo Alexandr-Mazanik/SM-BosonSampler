@@ -6,51 +6,54 @@ import time
 
 
 def to_sf_BSgate(q, modes, theta=np.pi/4, phi_rho=0., phi_tau=0.):
-    Rgate(phi_tau)  | q[modes[0] - 1]
+    Rgate(phi_tau) | q[modes[0] - 1]
     Rgate(-phi_tau) | q[modes[1] - 1]
     BSgate(theta, phi_rho - phi_tau) | (q[modes[0] - 1], q[modes[1] - 1])
 
 
-def test():
-    num_of_modes = 3
+def upload_sf_system(q, f_scheme):
+    for f_beam_splitter in f_scheme:
+        mode1, mode2 = list(map(int, f_beam_splitter.split()[0:2]))
+        theta, phi_rho, phi_tau = list(map(float, f_beam_splitter.split()[2:]))
+        to_sf_BSgate(q, (mode1, mode2), theta, phi_rho, phi_tau)
 
+
+def test():
     # calculate unitary using strawberry fields
-    time_sf_start = time.time()
+    f_scheme = open('scheme/curr_scheme.txt', 'r')
+    num_of_modes = int(f_scheme.readline())
+
     test_unitary = sf.Program(num_of_modes)
     with test_unitary.context as q:
-        to_sf_BSgate(q, (1, 2), theta=0.233, phi_rho=23.231, phi_tau=0.232)
-        to_sf_BSgate(q, (2, 3), theta=1.234, phi_rho=1.231, phi_tau=0.873)
+        upload_sf_system(q, f_scheme)
+        f_scheme.close()
 
+    time_sf_start = time.time()
     test_unitary_compiled = test_unitary.compile(compiler="gaussian_unitary")
-
-    s = test_unitary_compiled.circuit[0].op.p[0]
-    sf_u = s[:num_of_modes, :num_of_modes] + 1j * s[num_of_modes:, :num_of_modes]
-    print("\nstrawberry fields U:\n", np.round(sf_u, 3))
     time_sf_end = time.time()
 
-    # and our unitary
+    s = test_unitary_compiled.circuit[0].op.p[0]
+    sf_unitary = s[:num_of_modes, :num_of_modes] + 1j * s[num_of_modes:, :num_of_modes]
+    print("--> SF - done")
+
+    # calculate unitary using boson sampler
+    sampler_unitary = main.BosonSampler(num_of_modes)
+    sampler_unitary.upload_scheme_from_file()
+
     time_bs_start = time.time()
-    sampler_unitary_test = main.BosonSampler(num_of_modes)
-
-    sampler_unitary_test.add_BS_gate((1, 2), theta=0.233, phi_rho=23.231, phi_tau=0.232)
-    sampler_unitary_test.add_BS_gate((2, 3), theta=1.234, phi_rho=1.231, phi_tau=0.873)
-
-    sampler_unitary_test.calc_system_unitary()
-    sampler_u = sampler_unitary_test.unitary
-
-    print("\nsampler U:\n", np.round(sampler_u, 3))
+    sampler_unitary.calc_system_unitary()
+    sampler_unitary = sampler_unitary.unitary
     time_bs_end = time.time()
+    print("--> boson_sample - done")
 
     # compare them
-    print("\nThe time of execution of SF is :",
-          (time_sf_end - time_sf_start) * 10 ** 3, "ms")
-    print("\nThe time of execution of Boson_sampler is :",
-          (time_bs_end - time_bs_start) * 10 ** 3, "ms")
+    print("\n--> The time of execution of SF is :", (time_sf_end - time_sf_start) * 10 ** 3, "ms")
+    print("--> The time of execution of Boson_Sampler is :", (time_bs_end - time_bs_start) * 10 ** 3, "ms")
 
-    if np.array_equal(np.round(sampler_u, 5), np.round(sf_u, 5)):
-        print("\nTrue\n")
+    if np.array_equal(np.round(sampler_unitary, 5), np.round(sf_unitary, 5)):
+        print("\n--> test result: True\n")
     else:
-        print("\nFalse\n")
+        print("\n--> test result: False\n")
 
 
 if __name__ == '__main__':
