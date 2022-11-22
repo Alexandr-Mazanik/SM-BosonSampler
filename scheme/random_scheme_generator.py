@@ -3,8 +3,8 @@ import numpy as np
 
 
 def main():
-    number_of_modes = 216
-    bs_gate_number = 900
+    number_of_modes = 2
+    bs_gate_number = 1
 
     with open('curr_scheme.txt', 'w') as f_scheme:
         f_scheme.write(str(number_of_modes) + '\n')
