@@ -1,4 +1,5 @@
 from strawberryfields.ops import *
+from thewalrus import perm
 import strawberryfields as sf
 import numpy as np
 import math
@@ -22,11 +23,30 @@ def read_u(modes_num):
     return u
 
 
-def export_to_file(results, prob):
+def export_to_file(results, prob_perm):
     with open('samples/sf_sample.txt', 'w') as f_out:
         for i, result in enumerate(results):
-            f_out.write(str(result.samples[0]) + '\t' + str(np.round(prob[i], 4)) + '\n')
+            f_out.write(str(result.samples[0]) + '\t' + str(np.round(prob_perm[i], 4)) + '\n')
     print("--> Samples was successfully exported")
+
+
+def find_submatrix(sample, u, ph_num):
+    column_indexes = [i for i in range(ph_num)]
+    row_indexes = []
+    for i in range(len(sample)):
+        if sample[i] > 0:
+            for j in range(sample[i]):
+                row_indexes.append(i)
+
+    return u[:, column_indexes][row_indexes]
+
+
+def prob_using_perm(ph_number, sample, u):
+    norm = 1
+    for num in sample:
+        norm *= np.math.factorial(num)
+
+    return abs(perm(find_submatrix(sample, u, ph_number)))**2 / norm
 
 
 def boson_sampling(modes_num, injected_photons_num, batch_size):
@@ -54,14 +74,16 @@ def boson_sampling(modes_num, injected_photons_num, batch_size):
     print("--> Probability for uniform distribution: ", calc_prob_uniform(modes_num, injected_photons_num))
 
     results = []
-    prob = []
-    probs = eng.run(fock_states_prob)
+    prob_perm = []
     for i in range(batch_size):
-        results.append(eng.run(boson_sampler))
-        prob.append(probs.state.fock_prob(results[i].samples[0]))
+        result = eng.run(boson_sampler)
+        sample = result.samples[0]
+        results.append(result)
+
+        prob_perm.append(prob_using_perm(injected_photons_num, sample, u))
         if i % 10 == 0:
             print("--> complete: ", i, "/", batch_size)
-    export_to_file(results, prob)
+    export_to_file(results, prob_perm)
 
 
 def main():
