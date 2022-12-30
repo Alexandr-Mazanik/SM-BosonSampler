@@ -9,9 +9,9 @@ class BeamSplitter:
         self._r = np.exp(phi_rho * 1j) * np.sin(theta)
 
         self._mode1 = self._mode2 = None
-        self.unitary = None
+        self.bs_matrix = None
 
-    def calc_unitary(self, number_of_modes, modes):
+    def calc_bs_matrix(self, number_of_modes, modes):
         list_modes = np.array([modes[0] - 1, modes[1] - 1])
         list_data = np.array([self._t - 1, np.conj(self._t) - 1, -np.conj(self._r), self._r])
 
@@ -19,7 +19,7 @@ class BeamSplitter:
         col_ing = np.concatenate([np.array(range(number_of_modes)), list_modes, np.flip(list_modes)])
         data = np.concatenate([np.ones((number_of_modes, ), dtype=complex), list_data])
 
-        self.unitary = sparse.csr_matrix((data, (row_ind, col_ing)), shape=(number_of_modes, number_of_modes))
+        self.bs_matrix = sparse.csr_matrix((data, (row_ind, col_ing)), shape=(number_of_modes, number_of_modes))
 
 
 class Scheme:
@@ -30,14 +30,14 @@ class Scheme:
 
     def add_BS_gate(self, modes, theta=np.pi/4, phi_rho=0., phi_tau=0.):
         bs = BeamSplitter(theta, phi_rho, phi_tau)
-        bs.calc_unitary(self.number_of_modes, modes)
+        bs.calc_bs_matrix(self.number_of_modes, modes)
         self._beam_splitters.append(bs)
 
     def calc_scheme_matrix(self):
         time_unit_start = time.time()
         self.scheme_matrix = sparse.csr_matrix(np.identity(self.number_of_modes))
         for bs in np.flip(self._beam_splitters):
-            self.scheme_matrix = sparse.csr_matrix.dot(self.scheme_matrix, bs.unitary)
+            self.scheme_matrix = sparse.csr_matrix.dot(self.scheme_matrix, bs.bs_matrix)
         self.scheme_matrix = self.scheme_matrix.toarray()
         time_unit_end = time.time()
         print("--> The time for dot product is :", (time_unit_end - time_unit_start) * 10 ** 3, "ms")
