@@ -22,23 +22,23 @@ class BeamSplitter:
         self.unitary = sparse.csr_matrix((data, (row_ind, col_ing)), shape=(number_of_modes, number_of_modes))
 
 
-class BosonSampler:
+class Scheme:
     def __init__(self, modes_num):
         self.number_of_modes = modes_num
         self._beam_splitters = []
-        self.unitary = sparse.csr_matrix(np.identity(self.number_of_modes))
+        self.scheme_matrix = sparse.csr_matrix(np.identity(self.number_of_modes))
 
     def add_BS_gate(self, modes, theta=np.pi/4, phi_rho=0., phi_tau=0.):
         bs = BeamSplitter(theta, phi_rho, phi_tau)
         bs.calc_unitary(self.number_of_modes, modes)
         self._beam_splitters.append(bs)
 
-    def calc_system_unitary(self):
+    def calc_scheme_matrix(self):
         time_unit_start = time.time()
-        self.unitary = sparse.csr_matrix(np.identity(self.number_of_modes))
+        self.scheme_matrix = sparse.csr_matrix(np.identity(self.number_of_modes))
         for bs in np.flip(self._beam_splitters):
-            self.unitary = sparse.csr_matrix.dot(self.unitary, bs.unitary)
-        self.unitary = self.unitary.toarray()
+            self.scheme_matrix = sparse.csr_matrix.dot(self.scheme_matrix, bs.unitary)
+        self.scheme_matrix = self.scheme_matrix.toarray()
         time_unit_end = time.time()
         print("--> The time for dot product is :", (time_unit_end - time_unit_start) * 10 ** 3, "ms")
 
@@ -51,16 +51,23 @@ class BosonSampler:
                 self.add_BS_gate((mode1, mode2), theta, phi_rho, phi_tau)
         print("--> Scheme was successfully uploaded")
 
-    def export_system_unitary(self):
+    def export_scheme_matrix(self):
         with open('scheme/scheme_unitary.txt', 'w') as f_out:
-            for line in np.round(self.unitary, 6):
+            for line in np.round(self.scheme_matrix, 6):
                 for element in line:
                     f_out.write(str(element.real) + '\t' + str(element.imag) + '\t')
                 f_out.write('\n')
         print("--> Unitary was successfully exported")
 
-    def print_system_unitary(self):
-        print("--> U:\n", np.round(self.unitary, 3))
+    def print_scheme_matrix(self):
+        print("--> U:\n", np.round(self.scheme_matrix, 3))
+
+
+class BosonSampler:
+    def __init__(self, modes_num):
+        self.number_of_modes = modes_num
+        self._beam_splitters = []
+        self.unitary = sparse.csr_matrix(np.identity(self.number_of_modes))
 
 
 def is_unitary(matrix, dim):
@@ -74,12 +81,12 @@ def is_unitary(matrix, dim):
 def main():
     time_start = time.time()
 
-    sampler = BosonSampler(1)
-    sampler.upload_scheme_from_file()
-    sampler.calc_system_unitary()
-    sampler.export_system_unitary()
+    scheme = Scheme(1)
+    scheme.upload_scheme_from_file()
+    scheme.calc_scheme_matrix()
+    scheme.export_scheme_matrix()
 
-    is_unitary(sampler.unitary, sampler.number_of_modes)
+    is_unitary(scheme.scheme_matrix, scheme.number_of_modes)
 
     time_end = time.time()
 
