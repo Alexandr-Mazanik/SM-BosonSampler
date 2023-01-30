@@ -46,7 +46,7 @@ def prob_using_perm(ph_number, sample, u):
     for num in sample:
         norm *= np.math.factorial(num)
 
-    return abs(perm(find_submatrix(sample, u, ph_number)))**2 / norm
+    return abs(perm(find_submatrix(sample, u, ph_number), method="ryser"))**2 / norm
 
 
 def boson_sampling(modes_num, injected_photons_num, batch_size):
@@ -81,6 +81,7 @@ def boson_sampling(modes_num, injected_photons_num, batch_size):
         results.append(result)
 
         prob_perm.append(prob_using_perm(injected_photons_num, sample, u))
+
         if i % 10 == 0:
             print("--> complete: ", i, "/", batch_size)
     export_to_file(results, prob_perm)
