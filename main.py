@@ -1,6 +1,8 @@
 import numpy as np
 import time
+import itertools
 from scipy import sparse
+from thewalrus import perm
 
 
 class BeamSplitter:
@@ -64,10 +66,72 @@ class Scheme:
 
 
 class BosonSampler:
-    def __init__(self, modes_num):
-        self.number_of_modes = modes_num
-        self._beam_splitters = []
-        self.unitary = sparse.csr_matrix(np.identity(self.number_of_modes))
+    def __init__(self, scheme, init_config):
+        self._scheme = scheme
+        self._photons_number = sum(init_config)
+        self._basis = self.create_fock_basis()
+        self._dim = len(self._basis)
+        self._init_config = self._basis.index(list(init_config))
+
+        self._transform_matrix = self.calc_transform_matrix()
+
+    def create_fock_basis(self):
+        basis = []
+        slots_num = self._photons_number + self._scheme.number_of_modes
+        all_comb_bars = list(itertools.combinations(range(1, slots_num), self._scheme.number_of_modes - 1))
+        for bars in all_comb_bars:
+            bars = list(bars)
+            bars.append(slots_num)
+            bars.insert(0, 0)
+            basis_vec = []
+            for i in range(self._scheme.number_of_modes):
+                basis_vec.append(bars[i+1] - bars[i] - 1)
+            basis.append(basis_vec)
+
+        return basis
+
+    def calc_transform_matrix(self):
+        def find_submatrix():
+            def get_indexes(vec):
+                indexes = []
+                for i in range(self._scheme.number_of_modes):
+                    if vec[i] > 0:
+                        for j in range(vec[i]):
+                            indexes.append(i)
+                return indexes
+
+            column_indexes = get_indexes(self._basis[vec_in])
+            row_indexes = get_indexes(self._basis[vec_out])
+
+            return self._scheme.scheme_matrix[:, column_indexes][row_indexes]
+
+        transform_matrix = np.empty([self._dim, self._dim], dtype=float)
+        for vec_in in range(self._dim):
+            for vec_out in range(self._dim):
+                norm = 1
+                for num in self._basis[vec_in]:
+                    norm *= np.math.factorial(num)
+                for num in self._basis[vec_out]:
+                    norm *= np.math.factorial(num)
+
+                transform_matrix[vec_in][vec_out] = \
+                    abs(perm(find_submatrix(), method="ryser")) ** 2 / norm
+
+        return transform_matrix
+
+    def sample(self, batch_size):
+        prob_distribution = self._transform_matrix[self._init_config]
+        choices = [np.random.choice(range(self._dim), p=prob_distribution) for _ in range(batch_size)]
+
+        with open('samples/sample.txt', 'w') as f_out:
+            for result in choices:
+                f_out.write(str(self._basis[result]) + '\t' +
+                            str(np.round(self._transform_matrix[self._init_config][result], 4)) + '\n')
+
+        print("--> Samples was successfully exported")
+
+    def print_transform_matrix(self):
+        print("--> H:\n", self._transform_matrix)
 
 
 def is_unitary(matrix, dim):
@@ -86,7 +150,8 @@ def main():
     scheme.calc_scheme_matrix()
     scheme.export_scheme_matrix()
 
-    is_unitary(scheme.scheme_matrix, scheme.number_of_modes)
+    sampler = BosonSampler(scheme, (2, 2, 2))
+    sampler.sample(batch_size=100)
 
     time_end = time.time()
 
