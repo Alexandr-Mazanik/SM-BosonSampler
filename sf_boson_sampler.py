@@ -88,7 +88,7 @@ def boson_sampling(modes_num, injected_photons_num, batch_size):
 
 
 def main():
-    boson_sampling(modes_num=4, injected_photons_num=3, batch_size=100)
+    boson_sampling(modes_num=3, injected_photons_num=2, batch_size=100)
 
 
 if __name__ == '__main__':
