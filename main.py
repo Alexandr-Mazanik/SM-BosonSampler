@@ -150,8 +150,8 @@ def main():
     scheme.calc_scheme_matrix()
     scheme.export_scheme_matrix()
 
-    sampler = BosonSampler(scheme, (2, 2, 2))
-    sampler.sample(batch_size=100)
+    sampler = BosonSampler(scheme, (1, 1, 0))
+    sampler.sample(batch_size=700)
 
     time_end = time.time()
 
