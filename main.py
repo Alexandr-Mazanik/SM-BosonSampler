@@ -126,7 +126,7 @@ class BosonSampler:
         with open('samples/sample.txt', 'w') as f_out:
             for result in choices:
                 f_out.write(str(self._basis[result]) + '\t' +
-                            str(np.round(self._transform_matrix[self._init_config][result], 4)) + '\n')
+                            str(np.round(self._transform_matrix[self._init_config][result], 6)) + '\n')
 
         print("--> Samples was successfully exported")
 
@@ -150,8 +150,8 @@ def main():
     scheme.calc_scheme_matrix()
     scheme.export_scheme_matrix()
 
-    sampler = BosonSampler(scheme, (1, 1, 0))
-    sampler.sample(batch_size=700)
+    sampler = BosonSampler(scheme, (1, 1, 1, 1, 0, 0, 0))
+    sampler.sample(batch_size=500000)
 
     time_end = time.time()
 
