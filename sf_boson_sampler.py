@@ -3,6 +3,7 @@ from thewalrus import perm
 import strawberryfields as sf
 import numpy as np
 import math
+import os
 
 
 def calc_prob_uniform(modes_num, injected_photons_num):
@@ -23,8 +24,8 @@ def read_u(modes_num):
     return u
 
 
-def export_to_file(results, prob_perm):
-    with open('samples/sf_sample.txt', 'w') as f_out:
+def export_to_file(results, prob_perm, file_name):
+    with open(os.path.join('samples', file_name), 'w') as f_out:
         for i, result in enumerate(results):
             f_out.write(str(result.samples[0]) + '\t' + str(np.round(prob_perm[i], 4)) + '\n')
     print("--> Samples was successfully exported")
@@ -49,7 +50,7 @@ def prob_using_perm(ph_number, sample, u):
     return abs(perm(find_submatrix(sample, u, ph_number), method="ryser"))**2 / norm
 
 
-def boson_sampling(modes_num, injected_photons_num, batch_size):
+def boson_sampling(modes_num, injected_photons_num, batch_size, file_name):
     boson_sampler = sf.Program(modes_num)
     fock_states_prob = sf.Program(modes_num)
 
@@ -84,11 +85,11 @@ def boson_sampling(modes_num, injected_photons_num, batch_size):
 
         if i % 10 == 0:
             print("--> complete: ", i, "/", batch_size)
-    export_to_file(results, prob_perm)
+    export_to_file(results, prob_perm, file_name=file_name)
 
 
 def main():
-    boson_sampling(modes_num=4, injected_photons_num=3, batch_size=700)
+    boson_sampling(modes_num=4, injected_photons_num=3, batch_size=700, file_name='sf_sample.txt')
 
 
 if __name__ == '__main__':

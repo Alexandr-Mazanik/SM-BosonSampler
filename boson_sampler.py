@@ -1,6 +1,7 @@
 import numpy as np
 import time
 import itertools
+import os
 from scipy import sparse
 from thewalrus import perm
 
@@ -25,7 +26,7 @@ class BeamSplitter:
 
 
 class Scheme:
-    def __init__(self, modes_num):
+    def __init__(self, modes_num=1):
         self.number_of_modes = modes_num
         self._beam_splitters = []
         self.scheme_matrix = sparse.csr_matrix(np.identity(self.number_of_modes))
@@ -44,17 +45,18 @@ class Scheme:
         time_unit_end = time.time()
         print("--> The time for dot product is :", (time_unit_end - time_unit_start) * 10 ** 3, "ms")
 
-    def upload_scheme_from_file(self):
-        with open('scheme/curr_scheme.txt', 'r') as f_scheme:
+    def upload_scheme_from_file(self, file_name):
+        with open(os.path.join('scheme', file_name), 'r') as f_scheme:
             self.number_of_modes = int(f_scheme.readline())
             for f_beam_splitter in f_scheme:
                 mode1, mode2 = list(map(int, f_beam_splitter.split('\t')[0:2]))
                 theta, phi_rho, phi_tau = list(map(float, f_beam_splitter.split('\t')[2:]))
                 self.add_BS_gate((mode1, mode2), theta, phi_rho, phi_tau)
         print("--> Scheme was successfully uploaded")
+        print("--> Number of modes: ", self.number_of_modes)
 
-    def export_scheme_matrix(self):
-        with open('scheme/scheme_unitary.txt', 'w') as f_out:
+    def export_scheme_matrix(self, file_name):
+        with open(os.path.join('scheme', file_name), 'w') as f_out:
             for line in np.round(self.scheme_matrix, 6):
                 for element in line:
                     f_out.write(str(element.real) + '\t' + str(element.imag) + '\t')
@@ -119,11 +121,11 @@ class BosonSampler:
 
         return transform_matrix
 
-    def sample(self, batch_size):
+    def sample(self, batch_size, file_name):
         prob_distribution = self._transform_matrix[self._init_config]
         choices = [np.random.choice(range(self._dim), p=prob_distribution) for _ in range(batch_size)]
 
-        with open('samples/sample.txt', 'w') as f_out:
+        with open(os.path.join('samples', file_name), 'w') as f_out:
             for result in choices:
                 f_out.write(str(self._basis[result]) + '\t' +
                             str(np.round(self._transform_matrix[self._init_config][result], 6)) + '\n')
@@ -146,12 +148,12 @@ def main():
     time_start = time.time()
 
     scheme = Scheme(1)
-    scheme.upload_scheme_from_file()
+    scheme.upload_scheme_from_file('curr_scheme.txt')
     scheme.calc_scheme_matrix()
-    scheme.export_scheme_matrix()
+    scheme.export_scheme_matrix('scheme_unitary.txt')
 
-    sampler = BosonSampler(scheme, (1, 1, 1, 1, 0, 0, 0))
-    sampler.sample(batch_size=500000)
+    sampler = BosonSampler(scheme, (1, 1, 1, 1))
+    sampler.sample(batch_size=500000, file_name='sample.txt')
 
     time_end = time.time()
 

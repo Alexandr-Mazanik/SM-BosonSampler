@@ -1,12 +1,10 @@
 import random
 import numpy as np
+import os
 
 
-def main():
-    number_of_modes = 7
-    bs_gate_number = 49
-
-    with open('scheme\curr_scheme.txt', 'w') as f_scheme:
+def generate_random_scheme(number_of_modes, bs_gate_number, file_name='curr_scheme.txt'):
+    with open(os.path.join('scheme', file_name), 'w') as f_scheme:
         f_scheme.write(str(number_of_modes) + '\n')
         for _ in range(bs_gate_number):
             set_of_modes = set()
@@ -18,6 +16,13 @@ def main():
 
             f_scheme.write(str(set_of_modes[0]) + '\t' + str(set_of_modes[1]) + '\t' + str(theta)
                            + '\t' + str(phi_rho) + '\t' + str(phi_tau) + '\n')
+
+
+def main():
+    number_of_modes = 7
+    bs_gate_number = 49
+
+    generate_random_scheme(number_of_modes, bs_gate_number)
 
 
 if __name__ == '__main__':
