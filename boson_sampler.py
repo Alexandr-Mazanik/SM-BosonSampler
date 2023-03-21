@@ -2,6 +2,7 @@ import numpy as np
 import time
 import itertools
 import os
+from tqdm import tqdm
 from scipy import sparse
 from thewalrus import perm
 
@@ -108,7 +109,7 @@ class BosonSampler:
             return self._scheme.scheme_matrix[:, column_indices][row_indices]
 
         transform_matrix = np.empty([self._dim, self._dim], dtype=float)
-        for vec_in in range(self._dim):
+        for vec_in in tqdm(range(self._dim), desc="Computing..."):
             for vec_out in range(self._dim):
                 norm = 1
                 for num in self._basis[vec_in]:
@@ -123,10 +124,11 @@ class BosonSampler:
 
     def sample(self, batch_size, file_name):
         prob_distribution = self._transform_matrix[self._init_config]
-        choices = [np.random.choice(range(self._dim), p=prob_distribution) for _ in range(batch_size)]
+        choices = [np.random.choice(range(self._dim),
+                                    p=prob_distribution) for _ in tqdm(range(batch_size), desc="Sampling...")]
 
         with open(os.path.join('samples', file_name), 'w') as f_out:
-            for result in choices:
+            for result in tqdm(choices, desc="Writing to file..."):
                 f_out.write(str(self._basis[result]) + '\t' +
                             str(np.round(self._transform_matrix[self._init_config][result], 6)) + '\n')
 
@@ -148,11 +150,11 @@ def main():
     time_start = time.time()
 
     scheme = Scheme(1)
-    scheme.upload_scheme_from_file('curr_scheme.txt')
+    scheme.upload_scheme_from_file('curr_scheme_simple.txt')
     scheme.calc_scheme_matrix()
     scheme.export_scheme_matrix('scheme_unitary.txt')
 
-    sampler = BosonSampler(scheme, (1, 1, 1, 1))
+    sampler = BosonSampler(scheme, (1, 1, 1, 1, 1, 0))
     sampler.sample(batch_size=500000, file_name='sample.txt')
 
     time_end = time.time()

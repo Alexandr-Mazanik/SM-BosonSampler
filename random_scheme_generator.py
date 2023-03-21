@@ -56,7 +56,7 @@ def to_simple_scheme(block_scheme_file_name='curr_scheme.txt', simple_scheme_fil
 
 
 def main():
-    blocks_list = [[3, 9, 7]]
+    blocks_list = [[3, 9, 4]]
     generate_random_block_scheme(blocks_list)
 
     to_simple_scheme()

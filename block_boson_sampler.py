@@ -2,6 +2,7 @@ import numpy as np
 import time
 import itertools
 import os
+from tqdm import tqdm
 from scipy import sparse
 from thewalrus import perm
 
@@ -181,7 +182,7 @@ class BosonSampler:
             state = self.block_evolve(block, state, basis)
 
             prob = [abs(ampl) ** 2 for ampl in state]
-            if block_num == len(self._scheme.blocks)-1:
+            if block_num == len(self._scheme.blocks) - 1:
                 out_index = np.random.choice(len(basis), p=prob)
                 sample += basis[out_index]
             else:
@@ -193,12 +194,11 @@ class BosonSampler:
                 self._state, self._basis = self.collapse_state(state, basis, observation)
                 sample.append(observation)
 
-        # print("SAMPLE: ", sample)
         return sample
 
     def sample(self, batch_size=100, file_name='block_sample.txt'):
         with open(os.path.join('samples', file_name), 'w') as f_out:
-            for _ in range(batch_size):
+            for _ in tqdm(range(batch_size), desc="Sampling..."):
                 sample = self.calculate_one_sample()
                 f_out.write(str(sample) + '\n')
         print("--> Samples successfully exported")
@@ -209,12 +209,12 @@ def main():
     scheme.upload_scheme_from_file()
 
     modes_num = len(scheme.blocks) + scheme.blocks[-1]['block'].number_of_modes - 1
-    ph_num = 7
+    ph_num = 3
 
     init_config = [1 if i < ph_num else 0 for i in range(modes_num)]
 
     sampler = BosonSampler(scheme, init_config)
-    sampler.sample(batch_size=100000)
+    sampler.sample(batch_size=1000)
 
 
 if __name__ == '__main__':
