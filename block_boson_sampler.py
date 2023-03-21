@@ -193,7 +193,7 @@ class BosonSampler:
                 self._state, self._basis = self.collapse_state(state, basis, observation)
                 sample.append(observation)
 
-        print("SAMPLE: ", sample)
+        # print("SAMPLE: ", sample)
         return sample
 
     def sample(self, batch_size=100, file_name='block_sample.txt'):
