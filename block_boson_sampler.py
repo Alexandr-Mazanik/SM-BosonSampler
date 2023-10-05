@@ -32,7 +32,7 @@ class Block:
         self._beam_splitters = []
         self.block_matrix = sparse.csr_matrix(np.identity(self.number_of_modes))
 
-    def add_BS_gate(self, modes, theta=np.pi / 4, phi_rho=0., phi_tau=0.):
+    def add_bs_gate(self, modes, theta=np.pi / 4, phi_rho=0., phi_tau=0.):
         bs = BeamSplitter(theta, phi_rho, phi_tau)
         bs.calc_bs_matrix(self.number_of_modes, modes)
         self._beam_splitters.append(bs)
@@ -68,7 +68,7 @@ class Scheme:
                             break
                         mode1, mode2 = list(map(int, f_beam_splitter.split('\t')[0:2]))
                         theta, phi_rho, phi_tau = list(map(float, f_beam_splitter.split('\t')[2:]))
-                        block.add_BS_gate((mode1, mode2), theta, phi_rho, phi_tau)
+                        block.add_bs_gate((mode1, mode2), theta, phi_rho, phi_tau)
 
         print("--> Scheme was successfully uploaded")
 

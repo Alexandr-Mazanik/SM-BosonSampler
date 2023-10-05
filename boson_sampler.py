@@ -32,7 +32,7 @@ class Scheme:
         self._beam_splitters = []
         self.scheme_matrix = sparse.csr_matrix(np.identity(self.number_of_modes))
 
-    def add_BS_gate(self, modes, theta=np.pi/4, phi_rho=0., phi_tau=0.):
+    def add_bs_gate(self, modes, theta=np.pi / 4, phi_rho=0., phi_tau=0.):
         bs = BeamSplitter(theta, phi_rho, phi_tau)
         bs.calc_bs_matrix(self.number_of_modes, modes)
         self._beam_splitters.append(bs)
@@ -52,7 +52,7 @@ class Scheme:
             for f_beam_splitter in f_scheme:
                 mode1, mode2 = list(map(int, f_beam_splitter.split('\t')[0:2]))
                 theta, phi_rho, phi_tau = list(map(float, f_beam_splitter.split('\t')[2:]))
-                self.add_BS_gate((mode1, mode2), theta, phi_rho, phi_tau)
+                self.add_bs_gate((mode1, mode2), theta, phi_rho, phi_tau)
         print("--> Scheme was successfully uploaded")
         print("--> Number of modes: ", self.number_of_modes)
 
@@ -200,9 +200,11 @@ def main():
     scheme.calc_scheme_matrix()
     scheme.export_scheme_matrix('scheme_unitary.txt')
 
-    #sampler = BosonSampler(scheme, (1, 1, 1, 1, 1, 1))
-    #sampler.export_ground_truth()
-    #sampler.sample(batch_size=10000, file_name='sample.txt')
+    ''' 
+    sampler = BosonSampler(scheme, (1, 1, 1, 1, 1, 1))
+    sampler.export_ground_truth()
+    sampler.sample(batch_size=10000, file_name='sample.txt') 
+    '''
 
     distinguishable_sampler = DistinguishableSampler(scheme, (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0))
     distinguishable_sampler.sample(batch_size=10000)
