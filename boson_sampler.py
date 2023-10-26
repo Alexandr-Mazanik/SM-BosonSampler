@@ -1,4 +1,5 @@
 import numpy as np
+import strawberryfields as sf
 import time
 import itertools
 import os
@@ -45,6 +46,9 @@ class Scheme:
         self.scheme_matrix = self.scheme_matrix.toarray()
         time_unit_end = time.time()
         print("--> The time for dot product is :", (time_unit_end - time_unit_start) * 10 ** 3, "ms")
+
+    def haar_random_matrix(self):
+        self.scheme_matrix = sf.utils.random_interferometer(self.number_of_modes)
 
     def upload_scheme_from_file(self, file_name):
         with open(os.path.join('scheme', file_name), 'r') as f_scheme:
@@ -195,12 +199,16 @@ def is_unitary(matrix, dim):
 def main():
     time_start = time.time()
 
-    scheme = Scheme(1)
-    scheme.upload_scheme_from_file('curr_scheme_simple.txt')
-    scheme.calc_scheme_matrix()
+    ph_num = 5
+    modes_num = 25
+
+    scheme = Scheme(modes_num)
+    scheme.haar_random_matrix()
+    # scheme.upload_scheme_from_file('curr_scheme_simple.txt')
+    # scheme.calc_scheme_matrix()
     # scheme.export_scheme_matrix('scheme_unitary.txt')
 
-    sampler = BosonSampler(scheme, (1, 1, 1, 1, 1, 1, 1))
+    sampler = BosonSampler(scheme, [1 if _ < ph_num else 0 for _ in range(25)])
     sampler.export_ground_truth()
     sampler.sample(batch_size=10000, file_name='sample.txt') 
 
