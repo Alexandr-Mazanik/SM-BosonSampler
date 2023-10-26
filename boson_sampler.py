@@ -111,22 +111,22 @@ class BosonSampler:
 
             return self._scheme.scheme_matrix[:, column_indices][row_indices]
 
-        transform_matrix = np.empty([self._dim, self._dim], dtype=float)
+        transform_matrix = np.empty(self._dim, dtype=float)
         vec_in = self._init_config
-        for vec_out in tqdm(range(self._dim), desc="Computing...", disable=True):
+        for vec_out in tqdm(range(self._dim), desc="Computing...", disable=False):
             norm = 1
             for num in self._basis[vec_in]:
                 norm *= np.math.factorial(num)
             for num in self._basis[vec_out]:
                 norm *= np.math.factorial(num)
 
-            transform_matrix[vec_in][vec_out] = \
+            transform_matrix[vec_out] = \
                 abs(perm(find_submatrix(), method="ryser")) ** 2 / norm
 
         return transform_matrix
 
     def sample(self, batch_size, file_name):
-        prob_distribution = self._transform_matrix[self._init_config]
+        prob_distribution = self._transform_matrix
         choices = [np.random.choice(range(self._dim),
                                     p=prob_distribution) for _ in tqdm(range(batch_size), desc="Sampling...")]
 
@@ -141,7 +141,7 @@ class BosonSampler:
         with open(os.path.join('samples', output_file_name), 'w') as f_out:
             for i, vec in enumerate(self._basis):
                 f_out.write(str(vec) + '\t' +
-                            str(np.round(self._transform_matrix[self._init_config][i], 6)) + '\n')
+                            str(np.round(self._transform_matrix[i], 6)) + '\n')
 
     def print_transform_matrix(self):
         print("--> H:\n", self._transform_matrix)
@@ -198,17 +198,16 @@ def main():
     scheme = Scheme(1)
     scheme.upload_scheme_from_file('curr_scheme_simple.txt')
     scheme.calc_scheme_matrix()
-    scheme.export_scheme_matrix('scheme_unitary.txt')
+    # scheme.export_scheme_matrix('scheme_unitary.txt')
 
-    ''' 
-    sampler = BosonSampler(scheme, (1, 1, 1, 1, 1, 1))
+    sampler = BosonSampler(scheme, (1, 1, 1, 1, 1, 1, 1))
     sampler.export_ground_truth()
     sampler.sample(batch_size=10000, file_name='sample.txt') 
-    '''
 
+    '''
     distinguishable_sampler = DistinguishableSampler(scheme, (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0))
     distinguishable_sampler.sample(batch_size=10000)
-
+    '''
     time_end = time.time()
 
     print("\n--> The time of execution is :", (time_end - time_start) * 10 ** 3, "ms")

@@ -149,7 +149,19 @@ class BosonSampler:
 
         return new_state, new_basis
 
-    def calculate_one_sample(self):
+    @staticmethod
+    def threshold(state, threshold):
+        probs = np.abs(np.array(state)) ** 2
+        max_prob = probs.max()
+        for i in range(len(state)):
+            if probs[i] < threshold * max_prob:
+                state[i] = 0
+        norm = np.linalg.norm(state)
+        if norm == 0:
+            raise Exception("Threshold too high")
+        return state / norm
+
+    def calculate_one_sample(self, threshold, disable_tsh=False):
         sample = []
         ph_num = 0
         prev_block = None
@@ -179,8 +191,9 @@ class BosonSampler:
 
                     j = basis.index(new_vec)
                     state[j] = self._state[i]
-
             state = self.block_evolve(block, state, basis)
+            if not disable_tsh:
+                state = self.threshold(state, threshold)
 
             prob = [abs(ampl) ** 2 for ampl in state]
             if block_num == len(self._scheme.blocks) - 1:
@@ -197,21 +210,21 @@ class BosonSampler:
 
         return sample
 
-    def sample(self, batch_size=100, file_name='block_sample', samples_num=1):
+    def sample(self, batch_size=100, file_name='block_sample', threshold=0., samples_num=1, disable_pb=False, disable_tsh=False):
         for i in range(samples_num):
-            file_name_full = file_name + str(i+1) + '.txt'
+            file_name_full = file_name + str(i + 1) + '.txt'
             with open(os.path.join('samples', file_name_full), 'w') as f_out:
                 time_unit_start = time.time()
-                for _ in tqdm(range(batch_size), desc="Sampling..."):
-                    sample = self.calculate_one_sample()
+                for _ in tqdm(range(batch_size), desc="Sampling...", disable=disable_pb):
+                    sample = self.calculate_one_sample(threshold, disable_tsh=disable_tsh)
                     f_out.write(str(sample) + '\n')
                 time_unit_end = time.time()
                 print("--> Time for sampling :", (time_unit_end - time_unit_start) * 10 ** 3, "ms")
             print("--> Samples successfully exported")
 
-    def one_sample_time(self):
+    def one_sample_time(self, threshold=0., disable_tsh=False):
         time_unit_start = time.time()
-        self.calculate_one_sample()
+        self.calculate_one_sample(threshold, disable_tsh=disable_tsh)
         time_unit_end = time.time()
 
         return (time_unit_end - time_unit_start) * 10 ** 3
@@ -222,12 +235,12 @@ def main():
     scheme.upload_scheme_from_file()
 
     modes_num = len(scheme.blocks) + scheme.blocks[-1]['block'].number_of_modes - 1
-    ph_num = 100
+    ph_num = 4
 
     init_config = [1 if i < ph_num else 0 for i in range(modes_num)]
 
     sampler = BosonSampler(scheme, init_config)
-    sampler.sample(batch_size=1000)
+    sampler.sample(batch_size=2000, threshold=0.99, disable_tsh=False)
 
 
 if __name__ == '__main__':
