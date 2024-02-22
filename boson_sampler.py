@@ -60,6 +60,19 @@ class Scheme:
         print("--> Scheme was successfully uploaded")
         print("--> Number of modes: ", self.number_of_modes)
 
+    def upload_unitary(self, file_name):
+        self.scheme_matrix = np.empty([self.number_of_modes, self.number_of_modes], dtype=complex)
+        with open(os.path.join('scheme', file_name), 'r') as f_scheme:
+            for i, f_line in enumerate(f_scheme):
+                f_line = f_line.strip()
+                values = list(map(float, f_line.split('\t')))
+                m = 0
+                j = 0
+                for _ in range(self.number_of_modes):
+                    self.scheme_matrix[i][m] = complex(values[j], values[j+1])
+                    j += 2
+                    m += 1
+
     def export_scheme_matrix(self, file_name):
         with open(os.path.join('scheme', file_name), 'w') as f_out:
             for line in np.round(self.scheme_matrix, 6):
@@ -188,6 +201,38 @@ class DistinguishableSampler:
                 print("--> Distinguishable Samples successfully exported")
 
 
+class UniformSampler:
+    def __init__(self, scheme, init_config):
+        self._scheme = scheme
+        self._photons_number = sum(init_config)
+        self._basis = self.create_fock_basis()
+        self._dim = len(self._basis)
+
+    def create_fock_basis(self):
+        basis = []
+        slots_num = self._photons_number + self._scheme.number_of_modes
+        all_comb_bars = list(itertools.combinations(range(1, slots_num), self._scheme.number_of_modes - 1))
+        for bars in all_comb_bars:
+            bars = list(bars)
+            bars.append(slots_num)
+            bars.insert(0, 0)
+            basis_vec = []
+            for i in range(self._scheme.number_of_modes):
+                basis_vec.append(bars[i+1] - bars[i] - 1)
+            basis.append(basis_vec)
+
+        return basis
+
+    def sample(self, batch_size=100, file_name='uniform_sample', samples_num=1):
+        for i in range(samples_num):
+            choices = [np.random.choice(range(self._dim)) for _ in tqdm(range(batch_size), desc="Sampling...")]
+            file_name_full = file_name + str(i + 1) + '.txt'
+            with open(os.path.join('samples', file_name_full), 'w') as f_out:
+                for result in tqdm(choices, desc="Sampling..."):
+                    f_out.write(str(self._basis[result]) + '\n')
+                print("--> Uniform Samples successfully exported")
+
+
 def is_unitary(matrix, dim):
     matrix_dagger = np.conj(matrix.transpose())
     if (np.round(np.dot(matrix, matrix_dagger), 10) == np.identity(dim)).all():
@@ -199,18 +244,23 @@ def is_unitary(matrix, dim):
 def main():
     time_start = time.time()
 
-    ph_num = 5
-    modes_num = 25
+    ph_num = 4
+    modes_num = 16
+    init_config = [1 if _ < ph_num else 0 for _ in range(modes_num)]
 
     scheme = Scheme(modes_num)
     scheme.haar_random_matrix()
-    # scheme.upload_scheme_from_file('curr_scheme_simple.txt')
+    # scheme.upload_unitary('matrix.txt')
+    # is_unitary(scheme.scheme_matrix, 25)
     # scheme.calc_scheme_matrix()
-    # scheme.export_scheme_matrix('scheme_unitary.txt')
+    scheme.export_scheme_matrix('scheme_unitary_4_20.txt')
 
-    sampler = BosonSampler(scheme, [1 if _ < ph_num else 0 for _ in range(25)])
-    sampler.export_ground_truth()
-    sampler.sample(batch_size=10000, file_name='sample.txt') 
+    # sampler = BosonSampler(scheme, init_config)
+    # sampler.export_ground_truth()
+    # sampler.sample(batch_size=1, file_name='sample.txt')
+
+    # un_sampler = UniformSampler(scheme, init_config)
+    # un_sampler.sample(batch_size=10000, file_name='uniform_sample.txt')
 
     '''
     distinguishable_sampler = DistinguishableSampler(scheme, (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0))
