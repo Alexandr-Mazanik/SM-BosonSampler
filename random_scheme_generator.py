@@ -1,5 +1,6 @@
 import random
 import numpy as np
+import strawberryfields as sf
 import os
 
 
@@ -55,11 +56,31 @@ def to_simple_scheme(block_scheme_file_name='curr_scheme.txt', simple_scheme_fil
     return number_of_modes
 
 
-def main():
-    blocks_list = [[3, 3, 10]]
-    generate_random_block_scheme(blocks_list)
+def generate_haar_ran_u_block(block, file_name="curr_scheme_unitary.txt"):
+    modes_num = block[0] + block[1] - 1
+    block_matrix = sf.utils.random_interferometer(block[0])
+    scheme_unitary = np.eye(modes_num)
+    for i in range(block[1] - 1, -1, -1):
+        last_bl_size = modes_num - block[0] - i
+        mat = np.block([[np.eye(i), np.zeros((i, block[0])), np.zeros((i, last_bl_size))],
+                        [np.zeros((block[0], i)), block_matrix, np.zeros((block[0], modes_num - block[0] - i))],
+                        [np.zeros((last_bl_size, i)), np.zeros((last_bl_size, block[0])), np.eye(last_bl_size)]])
+        scheme_unitary = np.matmul(scheme_unitary, mat)
 
-    to_simple_scheme()
+    with open(os.path.join('scheme', file_name), 'w') as f_out:
+        for line in np.round(scheme_unitary, 6):
+            for element in line:
+                f_out.write(str(element.real) + '\t' + str(element.imag) + '\t')
+            f_out.write('\n')
+    print("--> Unitary was successfully exported")
+
+
+def main():
+    # blocks_list = [[3, 1, 10]]
+    # generate_random_block_scheme(blocks_list)
+    generate_haar_ran_u_block([4, 13], file_name="scheme_unitary_bl_4_4_20.txt")
+
+    # to_simple_scheme()
 
 
 if __name__ == '__main__':

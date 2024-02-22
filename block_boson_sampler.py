@@ -235,12 +235,12 @@ def main():
     scheme.upload_scheme_from_file()
 
     modes_num = len(scheme.blocks) + scheme.blocks[-1]['block'].number_of_modes - 1
-    ph_num = 4
+    ph_num = 6
 
     init_config = [1 if i < ph_num else 0 for i in range(modes_num)]
 
     sampler = BosonSampler(scheme, init_config)
-    sampler.sample(batch_size=2000, threshold=0.99, disable_tsh=False)
+    sampler.sample(batch_size=10000, disable_tsh=True)
 
 
 if __name__ == '__main__':
